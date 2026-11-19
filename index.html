@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#142421">
+  <meta name="description" content="Plan a motorcycle ride around rain and no-signal zones.">
+  <title>RideWindow · Motorcycle route planner</title>
+  <link rel="stylesheet" href="styles.css?v=invites">
+  <script defer src="route-data.js?v=crew"></script>
+  <script defer src="app.js?v=invites"></script>
+  <script defer src="ride-group.js?v=invites"></script>
+</head>
+<body>
+  <main id="app" class="app">
+    <section class="map-stage" aria-label="Ride map">
+      <div id="map" class="map"></div>
+      <div class="route-editor" id="route-editor">
+        <div class="purpose"><h1>Plan your ride</h1><span class="demo-label">Demo</span><button type="button" class="icon-button editor-toggle" id="editor-toggle" aria-expanded="true" aria-controls="route-form" aria-label="Collapse route inputs" data-icon="chevron"></button></div>
+        <button type="button" class="route-summary" id="route-summary" aria-controls="route-form" hidden><span id="places-label"></span><span class="summary-time" id="summary-time"></span><span class="edit-word">Edit</span></button>
+        <form id="route-form" autocomplete="off">
+          <div class="route-fields">
+            <label class="place-field"><span class="point origin"></span><span class="sr-only">Departure</span><input id="origin" list="places" placeholder="Departure" required value="Udaipur"></label>
+            <label class="place-field"><span class="point destination"></span><span class="sr-only">Destination</span><input id="destination" list="places" placeholder="Destination" required value="Gurgaon"></label>
+            <button type="button" id="swap" class="icon-button swap" aria-label="Swap departure and destination" data-icon="swap"></button>
+            <datalist id="places"></datalist>
+          </div>
+          <div class="route-actions">
+            <button type="button" id="edit-time" class="time-button" aria-haspopup="dialog"><span data-icon="clock"></span><span id="time-label">7:00 AM</span><span class="time-zone">IST</span><span data-icon="chevron"></span></button>
+            <button type="submit" class="button quiet compact">Show route <span data-icon="arrow"></span></button>
+          </div>
+          <p id="route-error" class="route-error" role="alert" hidden></p>
+        </form>
+      </div>
+      <div id="active-instruction" class="active-instruction" hidden></div>
+      <div class="map-tools" aria-label="Map controls">
+        <button type="button" class="icon-button map-tool" id="zoom-in" aria-label="Zoom in" data-icon="plus"></button>
+        <button type="button" class="icon-button map-tool" id="zoom-out" aria-label="Zoom out" data-icon="minus"></button>
+        <button type="button" class="icon-button map-tool" id="fit-map" aria-label="Fit route" data-icon="target"></button>
+      </div>
+      <div class="map-key" aria-label="Map layers">
+        <button type="button" class="layer rain" data-layer="rain" aria-pressed="true"><span data-icon="rain"></span> Rain</button>
+        <button type="button" class="layer signal" data-layer="signal" aria-pressed="true"><span data-icon="signal"></span> No signal</button>
+      </div>
+      <div class="map-credit">Schematic map</div>
+    </section>
+
+    <section id="sheet" class="sheet" data-size="peek" aria-label="Ride details">
+      <button type="button" id="sheet-handle" class="sheet-handle" aria-label="Expand ride details" aria-expanded="false"><span></span></button>
+      <div id="sheet-plan" class="sheet-plan">
+        <div class="sheet-heading">
+          <div><div id="route-kicker" class="route-kicker"></div><h2 id="route-metrics"></h2></div>
+          <div class="plan-actions">
+            <button type="button" class="button download-button" id="download-ride" aria-label="Download route for offline use" title="Download route"><span data-icon="download"></span><span>Download</span></button>
+            <button type="button" class="button primary start-button" id="start-ride"><span data-icon="navigation"></span> Start ride</button>
+          </div>
+        </div>
+        <div id="glance" class="glance" aria-label="Route conditions"></div>
+        <div class="sheet-tabs" role="tablist" aria-label="Ride details">
+          <button type="button" role="tab" id="tab-ride" aria-controls="sheet-panel" data-tab="ride" aria-selected="true"><span data-icon="route"></span> Ride</button>
+          <button type="button" role="tab" id="tab-weather" aria-controls="sheet-panel" data-tab="weather" aria-selected="false" tabindex="-1"><span data-icon="rain"></span> Weather</button>
+          <button type="button" role="tab" id="tab-signal" aria-controls="sheet-panel" data-tab="signal" aria-selected="false" tabindex="-1"><span data-icon="signal"></span> Signal</button>
+          <button type="button" role="tab" id="tab-partners" aria-controls="sheet-panel" data-tab="partners" aria-selected="false" tabindex="-1"><span data-icon="people"></span> Partners</button>
+        </div>
+        <div id="sheet-panel" class="sheet-panel" role="tabpanel" aria-labelledby="tab-ride" tabindex="0"></div>
+      </div>
+      <div id="sheet-active" class="sheet-active" hidden></div>
+    </section>
+    <p id="announcement" class="sr-only" role="status"></p>
+  </main>
+
+  <dialog id="time-dialog" aria-labelledby="time-title">
+    <form id="time-form">
+      <h2 id="time-title">Departure time <small>IST</small></h2>
+      <div class="time-fields">
+        <label>Hour<select id="time-hour"></select></label>
+        <label>Minute<select id="time-minute"></select></label>
+        <label>AM / PM<select id="time-period"><option>AM</option><option>PM</option></select></label>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="button quiet" id="cancel-time">Cancel</button>
+        <button type="submit" class="button primary">Update</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog id="profile-dialog" class="group-dialog" aria-labelledby="profile-title">
+    <div class="dialog-top"><span>Rider profile</span><button type="button" class="icon-button" data-close="profile" aria-label="Close profile" data-icon="close"></button></div>
+    <div id="profile-content" class="group-scroll"></div>
+  </dialog>
+  <dialog id="room-dialog" class="group-dialog room-dialog" aria-labelledby="room-title">
+    <div class="dialog-top"><div><h2 id="room-title">Ride room</h2><p id="room-route"></p></div><button type="button" class="icon-button" data-close="room" aria-label="Close ride room" data-icon="close"></button></div>
+    <div id="room-members" class="room-members"></div>
+    <div id="room-call" class="room-call"></div>
+    <div id="room-messages" class="room-messages" role="log" aria-label="Ride chat" aria-live="polite"></div>
+    <div id="room-pane" class="group-scroll" hidden></div>
+    <form id="chat-form" class="chat-form">
+      <label class="sr-only" for="message">Message</label><input id="message" placeholder="Message the group" maxlength="500" required autocomplete="off">
+      <button type="submit" class="icon-button chat-send" aria-label="Send message" data-icon="arrow"></button>
+    </form>
+  </dialog>
+</body>
+</html>
